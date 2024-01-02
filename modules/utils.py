@@ -9,9 +9,11 @@ EDGE_KERNEL = np.array([
     [-1, -1, -1]
 ])
 
+MIN_MATCH_COUNT = 10
 
-def load_image(image_path: str):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+def load_image(image_path: str, grayscale = True):
+    if grayscale: image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    else: image = cv2.imread(image_path)
     return image
 
 
@@ -31,13 +33,20 @@ def convolve(image, kernel):
     return cv2.filter2D(image, -1, kernel)
 
 
-def match_features(a, b):
-    bf = cv2.BFMatcher()
-    matches = bf.knnMatch(a, b, k=2)
-
-    good = []
-    for m,n in matches: 
-        if m.distance <= 0.9 * n.distance:
-            good.append((m,))
+def match_features_bf(a, b):
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    
+    matches = bf.match(a, b)
+    matches = sorted(matches, key=lambda x: x.distance)
         
-    return good
+    return matches
+
+def match_features_flann(a, b):
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks = 50)
+
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+    matches = flann.knnMatch(a, b, k=2)
+
+    return matches
