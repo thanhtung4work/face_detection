@@ -4,7 +4,7 @@ import numpy as np
 from . import utils
 
 def perform_harris_corner(im_path_1, im_path_2):
-    img_1, img_2 = utils.load_image(im_path_1), utils.load_image(im_path_2)
+    img_1, img_2 = utils.load_image(im_path_1, grayscale=False), utils.load_image(im_path_2)
     img_1 = utils.resize_image(img_1, width=400)
     img_copy = img_2.copy()
     img_1 = np.float32(img_1)
@@ -12,7 +12,7 @@ def perform_harris_corner(im_path_1, im_path_2):
     # apply the cv2.cornerHarris method 
     # to detect the corners with appropriate 
     # values as input parameters 
-    dest = cv2.cornerHarris(img_2, 4, 9, 0.07) 
+    dest = cv2.cornerHarris(img_2, 2, 3, 0.04) 
     
     # Results are marked through the dilated corners 
     dest = cv2.dilate(dest, None) 

@@ -12,11 +12,13 @@ def generate_sift_features(image):
 
 
 def perform_sift(img_path_1, img_path_2):
-    im_1, im_2 = load_image(img_path_1), load_image(img_path_2)
+    im_1, im_2 = load_image(img_path_1, grayscale=False), load_image(img_path_2, grayscale=False)
     print(im_1.shape, im_2.shape)
 
     sift_features_1 = generate_sift_features(im_1)
+    print(f"SIFT keypoint of training image: {len(sift_features_1[0])}")
     sift_features_2 = generate_sift_features(im_2) 
+    print(f"SIFT keypoint of query image: {len(sift_features_2[0])}")
 
     matches = match_features_flann(sift_features_1[1], sift_features_2[1])
     # store all the good matches as per Lowe's ratio test.
@@ -25,7 +27,6 @@ def perform_sift(img_path_1, img_path_2):
     for m,n in matches:
         if m.distance < 0.7 * n.distance:
             good.append(m)
-    print(f"SIFT Matches: {len(matches)}")
 
     img3 = cv2.drawMatches(im_1, sift_features_1[0], im_2, sift_features_2[0], good, None)
 

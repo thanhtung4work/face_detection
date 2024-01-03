@@ -12,7 +12,7 @@ def generate_orb_features(image):
 
 
 def perform_orb(img_path_1, img_path_2):
-    im_1, im_2 = load_image(img_path_1), load_image(img_path_2)
+    im_1, im_2 = load_image(img_path_1, grayscale=False), load_image(img_path_2, grayscale=False)
     print(im_1.shape, im_2.shape)
 
     orb_features_1 = generate_orb_features(im_1)
