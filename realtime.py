@@ -1,79 +1,56 @@
+import time
+
 import cv2
 import numpy as np
 
-from modules import utils
+from modules import utils, haar_cascades
 
 face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml")
 eye_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
 templ_path = "input\\facial_features\\eyes\\eyes_4.jpg"
 
+# used to record the time when we processed last frame 
+prev_frame_time = 0
+  
+# used to record the time at which we processed current frame 
+new_frame_time = 0
+
+# font which we will be using to display FPS 
+font = cv2.FONT_HERSHEY_SIMPLEX 
+
 # reading the input image now
 cap = cv2.VideoCapture(0)
 while cap.isOpened():
     _, frame = cap.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # _, gray = cv2.threshold(gray, 170, 255, cv2.THRESH_TOZERO_INV) 
     template = utils.load_image(templ_path)
-    template = utils.smooth_image(template)
-    # _, template = cv2.threshold(template, 170, 255, cv2.THRESH_TOZERO_INV) 
+    
+    # time when we finish processing for this frame 
+    new_frame_time = time.time() 
+  
+    # Calculating the fps 
+  
+    # fps will be number of frame processed in given time frame 
+    # since their will be most of time error of 0.001 second 
+    # we will be subtracting it to get more accurate result 
+    fps = 1/(new_frame_time-prev_frame_time) 
+    prev_frame_time = new_frame_time 
 
-    """
+    # converting the fps into integer 
+    fps = int(fps) 
+  
+    # converting the fps to string so that we can display it on frame 
+    # by using putText function 
+    fps = str(fps) 
+  
+
     # FACE DETECTION CASCADE
-    faces = face_detector.detectMultiScale(
-        frame, scaleFactor=1.05, 
-        minNeighbors=5, minSize=(30, 30), 
-        flags=cv2.CASCADE_SCALE_IMAGE
-    )
+    frame = haar_cascades.perform_cascades(frame, show_window=False)
     
-    for (x,y, w, h) in faces:
-        cv2.rectangle(frame, pt1 = (x,y),pt2 = (x+w, y+h), color = (255,0,0),thickness =  3)
-        roi_gray = gray[y:y+h,x:x+w]
-        roi_color = frame[y:y+h, x:x+w]
-        eyes = eye_detector.detectMultiScale(roi_gray)
-        if len(eyes) == 0: continue
-        for (ex,ey, ew, eh) in eyes:
-            cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 5)
-        cv2.imshow("window", frame)
-    """
-
     
-    # TEMPLATE MATCHING
-    for scale in range(4, 10):
-        scaled_template = utils.resize_image(template, width=(gray.shape[1]//scale))
-        h, w = scaled_template.shape
-        # scaled_template = utils.convolve(scaled_template, utils.EDGE_KERNEL)
-
-        result = cv2.matchTemplate(gray, scaled_template, cv2.TM_CCOEFF_NORMED)
-        
-        #in_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-
-        # top_left = max_loc
-        # bottom_right = (top_left[0] + templ_w, top_left[1] + templ_h)
-
-        # cv2.rectangle(frame, top_left, bottom_right, 128, 2)
-        
-
-        (yCoords, xCoords) = np.where( result >= np.max(result)*0.99 )
-
-        # initialize our list of rectangles
-        rects = []
-        # loop over the starting (x, y)-coordinates again
-        for (x, y) in zip(xCoords, yCoords):
-            # update our list of rectangles
-            rects.append((x, y + 50, x + w, y + h + 50))
-            # frame[y+50:y+h+50, x:x+w, 0] = scaled_template
-
-        pick = utils.non_max_suppression_fast(np.array(rects), 0.4)
-
-        # loop over the final bounding boxes
-        for (startX, startY, endX, endY) in pick:
-            # draw the bounding box on the image
-            cv2.rectangle(frame, (startX, startY), (endX, endY),
-                (255, 0, 0), 3)
-        
-        
-        cv2.imshow('Match', frame)
+    # putting the FPS count on the frame 
+    cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA) 
+    cv2.imshow('Match', frame)
     
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
